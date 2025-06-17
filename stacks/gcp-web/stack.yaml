@@ -1,0 +1,11 @@
+name: gcp-web
+target: gcp
+provisioners:
+  - terraform
+config:
+  gcp: 
+    project_id: ${GCP_PROJECT_ID}
+    region: us-central1
+    zone: us-central1-a
+    instance_type: e2-micro
+    disk_size: 10
