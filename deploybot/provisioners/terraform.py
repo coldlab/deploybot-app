@@ -3,6 +3,7 @@ import json
 import subprocess
 from typing import Dict, Any
 from .base import BaseProvisioner
+from .terraform_parser import TerraformOutputParser
 
 class TerraformProvisioner(BaseProvisioner):
     def __init__(self, tf_dir: str, config: Dict[str, Any]):
@@ -10,6 +11,7 @@ class TerraformProvisioner(BaseProvisioner):
         self.tf_dir = tf_dir
         self.provider = config.get('provider', 'aws')
         self.variables = config.get('variables', {})
+        self.parser = TerraformOutputParser()
     
     def validate(self) -> None:
         if not os.path.isfile(os.path.join(self.tf_dir, 'main.tf')):
@@ -33,6 +35,51 @@ class TerraformProvisioner(BaseProvisioner):
             self.init()
             subprocess.run(['terraform', 'apply', '-auto-approve'], 
                          cwd=self.tf_dir, check=True, capture_output=True, text=True)
+            
+            # Get outputs
+            result = subprocess.run(
+                ['terraform', 'output', '-json'],
+                cwd=self.tf_dir,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            
+            output = json.loads(result.stdout)
+            return parse_terraform_outputs(output)
+        except subprocess.CalledProcessError as e:
+            error_output = e.stderr.strip() if e.stderr else str(e)
+            raise Exception(f"Terraform command failed: {error_output}")
+    
+    def apply_verbose(self, progress_callback=None) -> Dict[str, Any]:
+        """Apply Terraform configuration with verbose output parsing."""
+        try:
+            self.init()
+            
+            # Run terraform apply with streaming output
+            process = subprocess.Popen(
+                ['terraform', 'apply', '-auto-approve'],
+                cwd=self.tf_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+            
+            # Stream and parse output in real-time
+            if process.stdout:
+                for line in iter(process.stdout.readline, ''):
+                    if line:
+                        # Parse the line for resource events
+                        event = self.parser.parse_line(line)
+                        if event and progress_callback:
+                            formatted_event = self.parser.format_event(event)
+                            progress_callback(formatted_event)
+            
+            process.wait()
+            if process.returncode != 0:
+                raise subprocess.CalledProcessError(process.returncode, 'terraform apply')
             
             # Get outputs
             result = subprocess.run(

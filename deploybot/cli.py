@@ -20,7 +20,8 @@ def cli():
 @click.option('--target', help='Deployment target (gcp, aws). Defaults to stack\'s default target if not provided.')
 @click.option('--project-id', help='GCP Project ID (required for GCP target)')
 @click.option('--region', help='Region to deploy to (overrides stack config)')
-def deploy(stack: str, target: str, project_id: str, region: str):
+@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output during deployment')
+def deploy(stack: str, target: str, project_id: str, region: str, verbose: bool):
     """Deploy a stack to the specified target."""
     start_time = time.time()
     ui.print_header()
@@ -49,8 +50,16 @@ def deploy(stack: str, target: str, project_id: str, region: str):
         # Print stack information
         ui.print_stack_info(stack_obj, target_instance)
 
-        with ui.spinner("[bold blue]🚀 Deploying Infrastructure...[/bold blue]"):
-            outputs = terraform_provisioner.apply()
+        if verbose:
+            # Define progress callback for real-time updates
+            def progress_callback(event: str):
+                ui.console.print(f"  {event}")
+            
+            ui.console.print("[bold blue]🚀 Deploying Infrastructure...[/bold blue]")
+            outputs = terraform_provisioner.apply_verbose(progress_callback=progress_callback)
+        else:
+            with ui.spinner("[bold blue]🚀 Deploying Infrastructure...[/bold blue]"):
+                outputs = terraform_provisioner.apply()
         
         # Print outputs
         ui.print_success("✅ Infrastructure deployed!")
