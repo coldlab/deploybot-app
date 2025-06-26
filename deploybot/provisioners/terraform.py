@@ -30,11 +30,50 @@ class TerraformProvisioner(BaseProvisioner):
         except subprocess.CalledProcessError as e:
             raise Exception(f"Terraform init failed: {e.stderr.strip() if e.stderr else str(e)}")
     
-    def apply(self) -> Dict[str, Any]:
+    def _run_terraform_command(self, command: list, verbose: bool = False, progress_callback=None) -> None:
+        """Generic method to run any Terraform command with optional verbose output parsing."""
+        if not verbose:
+            subprocess.run(command, cwd=self.tf_dir, check=True, capture_output=True, text=True)
+            return
+
+        # Run terraform command with streaming output
+        process = subprocess.Popen(
+            command,
+            cwd=self.tf_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+            universal_newlines=True
+        )
+        
+        # Stream and parse output in real-time
+        if process.stdout:
+            for line in iter(process.stdout.readline, ''):
+                if not line:
+                    continue
+                
+                # Parse the line for resource events
+                event = self.parser.parse_line(line)
+                if not event:
+                    continue
+                
+                formatted_event = self.parser.format_event(event)
+                if progress_callback:
+                    progress_callback(formatted_event)
+        
+        process.wait()
+        if process.returncode == 0:
+            return
+
+        raise subprocess.CalledProcessError(process.returncode, ' '.join(command))
+    
+    def apply(self, verbose: bool = False, progress_callback=None) -> Dict[str, Any]:
+        """Apply Terraform configuration with optional verbose output parsing."""
         try:
             self.init()
-            subprocess.run(['terraform', 'apply', '-auto-approve'], 
-                         cwd=self.tf_dir, check=True, capture_output=True, text=True)
+            
+            self._run_terraform_command(['terraform', 'apply', '-auto-approve'], verbose, progress_callback)
             
             # Get outputs
             result = subprocess.run(
@@ -51,55 +90,13 @@ class TerraformProvisioner(BaseProvisioner):
             error_output = e.stderr.strip() if e.stderr else str(e)
             raise Exception(f"Terraform command failed: {error_output}")
     
-    def apply_verbose(self, progress_callback=None) -> Dict[str, Any]:
-        """Apply Terraform configuration with verbose output parsing."""
+    def destroy(self, verbose: bool = False, progress_callback=None) -> None:
+        """Destroy Terraform infrastructure with optional verbose output parsing."""
         try:
             self.init()
             
-            # Run terraform apply with streaming output
-            process = subprocess.Popen(
-                ['terraform', 'apply', '-auto-approve'],
-                cwd=self.tf_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                universal_newlines=True
-            )
+            self._run_terraform_command(['terraform', 'destroy', '-auto-approve'], verbose, progress_callback)
             
-            # Stream and parse output in real-time
-            if process.stdout:
-                for line in iter(process.stdout.readline, ''):
-                    if line:
-                        # Parse the line for resource events
-                        event = self.parser.parse_line(line)
-                        if event and progress_callback:
-                            formatted_event = self.parser.format_event(event)
-                            progress_callback(formatted_event)
-            
-            process.wait()
-            if process.returncode != 0:
-                raise subprocess.CalledProcessError(process.returncode, 'terraform apply')
-            
-            # Get outputs
-            result = subprocess.run(
-                ['terraform', 'output', '-json'],
-                cwd=self.tf_dir,
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            
-            output = json.loads(result.stdout)
-            return parse_terraform_outputs(output)
-        except subprocess.CalledProcessError as e:
-            error_output = e.stderr.strip() if e.stderr else str(e)
-            raise Exception(f"Terraform command failed: {error_output}")
-    
-    def destroy(self) -> None:
-        try:
-            subprocess.run(['terraform', 'destroy', '-auto-approve'], 
-                          cwd=self.tf_dir, check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError as e:
             error_output = e.stderr.strip() if e.stderr else str(e)
             raise Exception(f"Terraform destroy failed: {error_output}")
