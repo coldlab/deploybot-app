@@ -68,13 +68,15 @@ def deploy(stack: str, target: str, project_id: str, region: str):
 @click.option('--stack', required=True, help='Name of the stack (e.g. gcp-web)')
 @click.option('--target', help='Deployment target (gcp, onprem). Defaults to stack\'s default target if not provided.')
 @click.option('--project-id', help='GCP Project ID (required for GCP target)')
-def plan(stack: str, target: str, project_id: str):
+@click.option('--region', help='Region to deploy to (overrides stack config)')
+def plan(stack: str, target: str, project_id: str, region: str):
     """Show what will be deployed (Terraform plan)."""
     ui.print_header()
     params = DeployParameters(
         stack=stack,
         target=Target(target) if target else None,
-        project_id=project_id
+        project_id=project_id,
+        region=region
     )
     stack_obj = get_stack(params.stack)
     actual_target = params.target or stack_obj.default_target

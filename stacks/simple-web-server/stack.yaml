@@ -1,4 +1,4 @@
-name: gcp-web
+name: simple-web-server
 target: gcp
 provisioners:
   - terraform
@@ -8,4 +8,8 @@ config:
     region: us-central1
     zone: us-central1-a
     instance_type: e2-micro
+    disk_size: 10
+  aws:
+    region: ${AWS_REGION}
+    instance_type: t2.micro
     disk_size: 10

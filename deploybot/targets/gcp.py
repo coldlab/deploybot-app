@@ -32,6 +32,7 @@ class GCPTarget(BaseTarget):
             
             if not self.project_id and self.default_project:
                 self.project_id = self.default_project
+                self.config['project_id'] = self.default_project
 
         except Exception as e:
             raise Exception(
