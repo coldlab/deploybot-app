@@ -9,4 +9,5 @@ class Target(str, Enum):
 class Provisioner(str, Enum):
     """Available provisioners."""
     TERRAFORM = "terraform"
+    PULUMI = "pulumi"
     ANSIBLE = "ansible"

@@ -33,13 +33,13 @@ class Stack:
     def default_target(self) -> Target:
         return self.config.target
     
-    def get_terraform_dir(self, target_name: str) -> str:
-        """Returns the target-specific Terraform directory."""
-        tf_base_dir = os.path.join(self.path, 'terraform')
-        tf_target_dir = os.path.join(tf_base_dir, target_name)
-        if not os.path.isdir(tf_target_dir):
-            raise FileNotFoundError(f"Terraform directory for target '{target_name}' not found at {tf_target_dir}")
-        return tf_target_dir
+    def get_provisioner_dir(self, provisioner: Provisioner, target_name: str) -> str:
+        """Returns the target-specific provisioner directory."""
+        provisioner_base_dir = os.path.join(self.path, provisioner.value)
+        provisioner_target_dir = os.path.join(provisioner_base_dir, target_name)
+        if not os.path.isdir(provisioner_target_dir):
+            raise FileNotFoundError(f"{provisioner.value.title()} directory for target '{target_name}' not found at {provisioner_target_dir}")
+        return provisioner_target_dir
 
 def get_stack(stack_name: str) -> Stack:
     """Get a stack instance by name."""

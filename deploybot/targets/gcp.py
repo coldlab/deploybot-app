@@ -1,19 +1,19 @@
 from typing import Dict, Any
-import os
 from google.cloud import storage
 import google.auth
 
-from deploybot.core.enums import Target
+from deploybot.core.enums import Target, Provisioner
 from deploybot.core.stack import Stack
-from deploybot.provisioners.terraform import TerraformProvisioner
+from deploybot.provisioners.base import BaseProvisioner
 from .base import BaseTarget
-from ..provisioners.terraform_factory import TerraformFactory
+from ..provisioners.factory import ProvisionerFactory
+
 
 class GCPTarget(BaseTarget):
     """GCP deployment target implementation."""
     
-    def __init__(self, config: Dict[str, Any]):
-        super().__init__(name=Target.GCP.value, config=config)
+    def __init__(self, config: Dict[str, Any], provisioner: Provisioner):
+        super().__init__(name=Target.GCP.value, config=config, provisioner=provisioner)
         self.project_id = config.get('project_id')
         self.region = config.get('region', 'us-central1')
         self.zone = config.get('zone', 'us-central1-a')
@@ -54,5 +54,5 @@ class GCPTarget(BaseTarget):
         except Exception as e:
             raise Exception(f"Failed to validate GCP credentials: {str(e)}")
     
-    def get_provisioner(self, stack_obj: Stack) -> TerraformProvisioner:
-        return TerraformFactory.create(stack_obj, Target.GCP, self.config) 
+    def get_provisioner(self, stack_obj: Stack) -> BaseProvisioner:
+        return ProvisionerFactory.create(self.provisioner, stack_obj, Target.GCP, self.config) 

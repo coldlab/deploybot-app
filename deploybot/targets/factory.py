@@ -33,4 +33,4 @@ class TargetFactory:
             if parameters.region:
                 target_config['region'] = parameters.region              
             
-        return target_class(target_config)
+        return target_class(target_config, parameters.provisioner)

@@ -2,14 +2,15 @@ from typing import Dict, Any
 import boto3
 
 from deploybot.core.enums import Target
+from deploybot.core.enums import Provisioner
 from deploybot.core.stack import Stack
-from deploybot.provisioners.terraform import TerraformProvisioner
+from deploybot.provisioners.base import BaseProvisioner
 from .base import BaseTarget
-from ..provisioners.terraform_factory import TerraformFactory
+from ..provisioners.factory import ProvisionerFactory
 
 class AWSTarget(BaseTarget):   
-    def __init__(self, config: Dict[str, Any]):
-        super().__init__(name=Target.AWS.value, config=config)
+    def __init__(self, config: Dict[str, Any], provisioner: Provisioner):
+        super().__init__(name=Target.AWS.value, config=config, provisioner=provisioner)
         self.region = config.get('region', 'us-east-1')
         
         # Initialize AWS credentials
@@ -31,6 +32,5 @@ class AWSTarget(BaseTarget):
         except Exception as e:
             raise Exception(f"Failed to validate AWS credentials: {str(e)}")
     
-    def get_provisioner(self, stack_obj: Stack) -> TerraformProvisioner:
-        """Get the appropriate provisioner for this target."""
-        return TerraformFactory.create(stack_obj, Target.AWS, self.config) 
+    def get_provisioner(self, stack_obj: Stack) -> BaseProvisioner:
+        return ProvisionerFactory.create(self.provisioner, stack_obj, Target.AWS, self.config) 

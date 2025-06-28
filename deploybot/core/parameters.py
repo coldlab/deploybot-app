@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from .enums import Target
+from .enums import Target, Provisioner
 
 class DeployParameters(BaseModel):
     stack: str = Field(
@@ -17,4 +17,8 @@ class DeployParameters(BaseModel):
     region: Optional[str] = Field(
         default=None,
         description="Region to deploy to (overrides stack config)"
+    )
+    provisioner: Provisioner = Field(
+        default=Provisioner.TERRAFORM,
+        description="Provisioner to use (terraform, pulumi). Defaults to stack's default provisioner if not provided."
     )

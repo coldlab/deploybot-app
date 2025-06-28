@@ -43,3 +43,6 @@ terraform.rc
 *.json
 !package.json
 !tsconfig.json
+
+# Local test files
+*.test.py
