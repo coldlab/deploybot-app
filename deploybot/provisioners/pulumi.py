@@ -4,6 +4,7 @@ import subprocess
 import pulumi.automation as auto
 from typing import Dict, Any, Optional, Callable
 from deploybot.provisioners.base import BaseProvisioner
+from deploybot.provisioners.pulumi_parser import PulumiOutputParser
 
 class PulumiProvisioner(BaseProvisioner):
     def __init__(self, work_dir: str, config: Dict[str, Any]):
@@ -14,6 +15,7 @@ class PulumiProvisioner(BaseProvisioner):
         self.variables = config.get('variables', {})
         self.stack_name = config.get('stack_name', 'dev')
         self.project_name = config.get('project_name', 'deploybot-project')
+        self.parser = PulumiOutputParser()
         
         # Set environment variables for Pulumi
         os.environ["PULUMI_CONFIG_PASSPHRASE"] = "deploybot-local"
@@ -49,6 +51,17 @@ class PulumiProvisioner(BaseProvisioner):
         except Exception as e:
             raise Exception(f"Pulumi init failed: {str(e)}")
     
+    def _create_parsed_callback(self, progress_callback: Callable) -> Callable:
+        """Create a callback that parses and formats Pulumi output."""
+        def parsed_callback(output: str):
+            event = self.parser.parse_line(output)
+            if event:
+                formatted_event = self.parser.format_event(event)
+                progress_callback(formatted_event)
+            else:
+                progress_callback(output)
+        return parsed_callback
+
     def _run_pulumi_command(self, command: str, verbose: bool = False, progress_callback: Optional[Callable] = None) -> Dict[str, Any]:
         """Generic method to run Pulumi commands with optional verbose output."""
         try:
@@ -56,21 +69,24 @@ class PulumiProvisioner(BaseProvisioner):
             
             if command == "up":
                 if verbose and progress_callback:
-                    results = self.stack.up(on_output=progress_callback)
+                    parsed_callback = self._create_parsed_callback(progress_callback)
+                    results = self.stack.up(on_output=parsed_callback)
                 else:
                     results = self.stack.up()
                 return results.outputs
             
             elif command == "destroy":
                 if verbose and progress_callback:
-                    self.stack.destroy(on_output=progress_callback)
+                    parsed_callback = self._create_parsed_callback(progress_callback)
+                    self.stack.destroy(on_output=parsed_callback)
                 else:
                     self.stack.destroy()
                 return {}
             
             elif command == "preview":
                 if verbose and progress_callback:
-                    preview = self.stack.preview(on_output=progress_callback)
+                    parsed_callback = self._create_parsed_callback(progress_callback)
+                    preview = self.stack.preview(on_output=parsed_callback)
                 else:
                     preview = self.stack.preview()
                 return {"preview": preview}
