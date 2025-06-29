@@ -4,6 +4,7 @@ from googleapiclient import discovery
 from google.cloud import storage
 from google.cloud.devtools import cloudbuild_v1
 from google.cloud import run_v2
+from google.cloud import artifactregistry_v1
 
 class GCPClientFactory:
     def __init__(self):
@@ -23,3 +24,6 @@ class GCPClientFactory:
 
     def get_cloud_run_client(self) -> run_v2.ServicesClient:
         return run_v2.ServicesClient(credentials=self.credentials)
+
+    def get_artifact_registry_client(self) -> artifactregistry_v1.ArtifactRegistryClient:
+        return artifactregistry_v1.ArtifactRegistryClient(credentials=self.credentials)
