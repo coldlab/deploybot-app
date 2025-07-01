@@ -27,3 +27,13 @@ class GCPServiceUsage:
             return operation.result()
         except Exception as e:
             print(f"Error disabling API {api_name}: {e}")
+
+    def get_api(self, project_id: str, api_name: GoogleCloudService) -> service_usage_v1.Service:
+        name = f"projects/{project_id}/services/{api_name.value}"
+        try:
+            request = service_usage_v1.GetServiceRequest(
+                name=name
+            )
+            return self.client.get_service(request)
+        except Exception as e:
+            print(f"Error getting API {api_name}: {e}")

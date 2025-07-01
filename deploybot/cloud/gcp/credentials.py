@@ -9,10 +9,10 @@ def get_credentials(scopes: Optional[List[str]] = None) -> Credentials:
 
     service_account_file = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
     if service_account_file is None:
-        credentials, project = google.auth.default()
+        credentials, project = google.auth.default(scopes=scopes)
         if not isinstance(credentials, Credentials):
             raise ValueError("Default credentials are not compatible with the required Google Auth credentials type.")
-        return credentials.with_scopes(scopes)
+        return credentials
     
     return service_account.Credentials.from_service_account_file(
         service_account_file,

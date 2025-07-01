@@ -67,7 +67,7 @@ class GCPCloudSQLAdmin:
         return self.get_user(project_id, instance_name, user_name)
     
     def get_user(self, project_id: str, instance_name: str, user_name: str) -> dict:    
-        request = self.client.users().get(project=project_id, instance=instance_name, user=user_name)
+        request = self.client.users().get(project=project_id, instance=instance_name, name=user_name)
         response = request.execute()
         return response
 
