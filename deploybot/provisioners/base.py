@@ -27,3 +27,8 @@ class BaseProvisioner(ABC):
     def destroy(self) -> None:
         """Destroy the provisioned resources."""
         pass 
+
+    @abstractmethod
+    def plan(self) -> None:
+        """Generate a deployment plan."""
+        pass

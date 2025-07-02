@@ -130,7 +130,9 @@ class FastAPIPostgresRecipe(BaseRecipe):
             binding
         )
 
+        print(f"Application URL: {service.uri}")
         print(f"FastAPI PostgreSQL stack deployment completed!")
+
 
         # TODO: Create a state file to track the deployment (e.g. something simple just to know if the deployment is done, failed, etc.)
         
@@ -179,7 +181,92 @@ class FastAPIPostgresRecipe(BaseRecipe):
 
 
     def plan(self):
-        pass
+        """Show deployment plan with all resources and app details."""
+        print("=" * 60)
+        print("🚀 FastAPI PostgreSQL Stack Deployment Plan")
+        print("=" * 60)
+        
+        # Project Information
+        print(f"\n📋 Project Information:")
+        print(f"   Project ID: {self.variables['project_id']}")
+        print(f"   Region: {self.variables['region']}")
+        print(f"   Stack: {self.stack_name}")
+        
+        # Application Details
+        print(f"\n📱 Application Details:")
+        print(f"   App Name: {self.variables['app_name']}")
+        print(f"   Image Tag: {self.variables['image_tag']}")
+        print(f"   Source: FastAPI application with PostgreSQL")
+        print(f"   Container Registry: gcr.io/{self.variables['project_id']}/{self.variables['app_name']}:{self.variables['image_tag']}")
+        
+        # Infrastructure Resources
+        print(f"\n🏗️  Infrastructure Resources to Create:")
+        print(f"   ┌─ Google Cloud APIs to Enable:")
+        print(f"   │  ├─ Cloud SQL Admin API")
+        print(f"   │  ├─ Cloud Run API")
+        print(f"   │  ├─ Cloud Build API")
+        print(f"   │  ├─ Cloud Storage API")
+        print(f"   │  └─ Container Registry API")
+        print(f"   │")
+        print(f"   ├─ Database Layer:")
+        print(f"   │  ├─ Cloud SQL Instance: {self.variables['db_instance']}")
+        print(f"   │  │  ├─ Database: {self.variables['database_name']}")
+        print(f"   │  │  ├─ User: {self.variables['db_user']}")
+        print(f"   │  │  └─ Version: PostgreSQL 14")
+        print(f"   │  └─ Connection: Private VPC")
+        print(f"   │")
+        print(f"   ├─ Application Layer:")
+        print(f"   │  ├─ Cloud Run Service: {self.variables['app_name']}")
+        print(f"   │  │  ├─ Region: {self.variables['region']}")
+        print(f"   │  │  ├─ CPU: {self.variables['cloud_run_cpu']}")
+        print(f"   │  │  ├─ Memory: {self.variables['cloud_run_memory']}")
+        print(f"   │  │  ├─ Max Instances: {self.variables['cloud_run_max_instances']}")
+        print(f"   │  │  └─ Public Access: Enabled")
+        print(f"   │  └─ Cloud SQL Connection: Enabled")
+        print(f"   │")
+        print(f"   ├─ Build & Storage:")
+        print(f"   │  ├─ Cloud Storage Bucket: {self.variables['bucket_name']}")
+        print(f"   │  ├─ Source Archive: {self.variables['app_name']}.tar.gz")
+        print(f"   │  ├─ Cloud Build: Docker container build")
+        print(f"   │  └─ Artifact Registry: Container image storage")
+        print(f"   │")
+        print(f"   └─ Security & IAM:")
+        print(f"      ├─ Service Account: Cloud Run service account")
+        print(f"      ├─ IAM Binding: roles/run.invoker for allUsers")
+        print(f"      └─ Cloud SQL Client: Service account permissions")
+        
+        # Environment Variables
+        print(f"\n🔧 Environment Variables:")
+        print(f"   ├─ DB_USER: {self.variables['db_user']}")
+        print(f"   ├─ DB_PASSWORD: [HIDDEN]")
+        print(f"   ├─ DB_NAME: {self.variables['database_name']}")
+        print(f"   └─ DB_CONNECTION_NAME: [Auto-generated]")
+        
+        # Deployment Strategy
+        print(f"\n⚡ Deployment Strategy:")
+        print(f"   ├─ Parallel Deployment: Infrastructure + App")
+        print(f"   ├─ Database: Cloud SQL instance creation")
+        print(f"   ├─ Application: Container build + Cloud Run deployment")
+        print(f"   └─ Integration: Cloud SQL connection via Unix socket")
+        
+        # Estimated Costs (rough estimates)
+        print(f"\n💰 Estimated Monthly Costs (rough estimates):")
+        print(f"   ├─ Cloud SQL (db-f1-micro): ~$7-15/month")
+        print(f"   ├─ Cloud Run (512Mi, 1 CPU): ~$5-20/month (usage-based)")
+        print(f"   ├─ Cloud Storage: ~$0.02/GB/month")
+        print(f"   ├─ Cloud Build: ~$0.003/minute (build time)")
+        print(f"   └─ Total: ~$12-35/month (depending on usage)")
+        
+        # Post-Deployment Info
+        print(f"\n🎯 Post-Deployment Information:")
+        print(f"   ├─ Application URL: https://{self.variables['app_name']}-[hash]-{self.variables['region']}.run.app")
+        print(f"   ├─ Database Connection: Private VPC only")
+        print(f"   ├─ Scaling: Automatic (0 to {self.variables['cloud_run_max_instances']} instances)")
+        print(f"   └─ Monitoring: Cloud Run metrics available")
+        
+        print(f"\n" + "=" * 60)
+        print("✅ Plan complete! Run 'deploy' to execute this plan.")
+        print("=" * 60)
 
 # RecipeRegistry.register('fastapi-postgres', FastAPIPostgresRecipe)
 

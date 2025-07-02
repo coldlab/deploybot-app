@@ -32,3 +32,8 @@ class NativeProvisioner(BaseProvisioner):
         recipe_cls = RecipeRegistry.get(self.stack_name)
         recipe = recipe_cls()
         recipe.destroy()
+
+    def plan(self) -> None:
+        recipe_cls = RecipeRegistry.get(self.stack_name)
+        recipe = recipe_cls()
+        recipe.plan()
