@@ -164,7 +164,7 @@ def destroy(stack: str, target: str, project_id: str, region: str, force: bool):
                 print(f"\n❌ Destruction cancelled.")
                 return
 
-        print(f"\n⚡ Starting destruction...")
+        print(f"\n⚡ Starting destruction...\n")
         infrastructure_provisioner.destroy()
         
         # Print success summary
