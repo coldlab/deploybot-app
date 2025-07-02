@@ -10,8 +10,8 @@ from ..provisioners.factory import ProvisionerFactory
 
 class AWSTarget(BaseTarget):   
     def __init__(self, config: Dict[str, Any], provisioner: Provisioner):
-        super().__init__(name=Target.AWS.value, config=config, provisioner=provisioner)
-        self.region = config.get('region', 'us-east-1')
+        region = config.get('region', 'us-east-1')
+        super().__init__(name=Target.AWS.value, region=region, config=config, provisioner=provisioner)
         
         # Initialize AWS credentials
         self._init_credentials()

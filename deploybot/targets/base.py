@@ -7,8 +7,9 @@ from deploybot.core.enums import Provisioner
 class BaseTarget(ABC):
     """Base class for all deployment targets."""
     
-    def __init__(self, name: str, config: Dict[str, Any], provisioner: Provisioner):
+    def __init__(self, name: str, region: str, config: Dict[str, Any], provisioner: Provisioner):
         self.name = name
+        self.region = region
         self.config = config
         self.provisioner = provisioner
     

@@ -13,9 +13,9 @@ class GCPTarget(BaseTarget):
     """GCP deployment target implementation."""
     
     def __init__(self, config: Dict[str, Any], provisioner: Provisioner):
-        super().__init__(name=Target.GCP.value, config=config, provisioner=provisioner)
+        region = config.get('region', 'us-central1')
+        super().__init__(name=Target.GCP.value, region=region, config=config, provisioner=provisioner)
         self.project_id = config.get('project_id')
-        self.region = config.get('region', 'us-central1')
         self.zone = config.get('zone', 'us-central1-a')
         
         # Initialize credentials using Application Default Credentials
