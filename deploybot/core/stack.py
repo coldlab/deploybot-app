@@ -1,6 +1,6 @@
 import os
 import yaml
-from typing import Dict, Any, List
+from typing import List
 from pathlib import Path
 
 from deploybot.core.config import StackConfig
@@ -25,6 +25,10 @@ class Stack:
         except Exception as e:
             raise ValueError(f"Invalid configuration for stack '{self.name}' in '{config_path}': {e}")
     
+    @property
+    def default_provisioner(self) -> Provisioner:
+        return self.config.default_provisioner
+
     @property
     def provisioners(self) -> List[Provisioner]:
         return self.config.provisioners

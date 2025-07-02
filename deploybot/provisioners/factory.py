@@ -4,8 +4,9 @@ from deploybot.core.enums import Target
 from deploybot.core.stack import Stack
 from deploybot.core.enums import Provisioner
 from deploybot.provisioners.base import BaseProvisioner
-from .terraform import TerraformProvisioner
-from .pulumi import PulumiProvisioner
+# from .terraform import TerraformProvisioner
+from .native import NativeProvisioner
+# from .pulumi import PulumiProvisioner
 
 class ProvisionerFactory:   
     @classmethod
@@ -18,35 +19,35 @@ class ProvisionerFactory:
                 **target_config
             }
         }
+
+        if provisioner == Provisioner.NATIVE:
+            provisioner_config['stack_name'] = stack_obj.name
+            
+            return NativeProvisioner(
+                recipe_dir=provisioner_dir,
+                config=provisioner_config
+            )
         
-        if provisioner == Provisioner.TERRAFORM:
+        # elif provisioner == Provisioner.TERRAFORM:            
+        #     return TerraformProvisioner(
+        #         tf_dir=provisioner_dir,
+        #         config=provisioner_config
+        #     )
+        
+        # elif provisioner == Provisioner.PULUMI:
+        #     provisioner_config['project_name'] = stack_obj.name
+        #     if target == Target.GCP:
+        #         provisioner_config['provider_variables'] = {'gcp:project': target_config['project_id']}
+        #         target_config.pop('project_id')
+        #     elif target == Target.AWS:
+        #         provisioner_config['provider_variables'] = {'aws:region': target_config['region']}
+        #         target_config.pop('region')
+        #     else:
+        #         raise ValueError(f"Invalid target: {target}")
             
-            # Create Terraform configuration
-            # tf_config = {
-            #     'provider': target.value,
-            #     'variables': {
-            #         **target_config
-            #     }
-            # }
-            
-            return TerraformProvisioner(
-                tf_dir=provisioner_dir,
-                config=provisioner_config
-            )
-        elif provisioner == Provisioner.PULUMI:
-            provisioner_config['project_name'] = stack_obj.name
-            if target == Target.GCP:
-                provisioner_config['provider_variables'] = {'gcp:project': target_config['project_id']}
-                target_config.pop('project_id')
-            elif target == Target.AWS:
-                provisioner_config['provider_variables'] = {'aws:region': target_config['region']}
-                target_config.pop('region')
-            else:
-                raise ValueError(f"Invalid target: {target}")
-            
-            return PulumiProvisioner(
-                work_dir=provisioner_dir,
-                config=provisioner_config
-            )
+        #     return PulumiProvisioner(
+        #         work_dir=provisioner_dir,
+        #         config=provisioner_config
+        #     )
         else:
             raise ValueError(f"Invalid provisioner: {provisioner}")

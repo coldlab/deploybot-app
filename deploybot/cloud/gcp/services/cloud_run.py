@@ -15,6 +15,18 @@ class GCPCloudRunService:
             service = self.client.create_service(project_id, region, service_name, service_body)
         return service
 
+    def delete_service(self, project_id: str, region: str, service_name: str) -> None:
+        try:
+            self.client.get_service(project_id, region, service_name)
+        except Exception:
+            print(f"Service {service_name} not found in {region}, project: {project_id}")
+            print("Skipping deletion...")
+            return
+        print(f"Deleting service: {service_name} in {region}, project: {project_id}")
+        self.client.delete_service(project_id, region, service_name)
+        print(f"Deleted service: {service_name} in {region}, project: {project_id}")
+
+
     def set_iam_policy(self, project_id: str, region: str, service_name: str, binding: Binding) -> None:
         import json
         print(f"Fetching current IAM policy for service: {service_name} in {region}, project: {project_id}")

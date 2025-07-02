@@ -46,3 +46,13 @@ class GCPCloudSQLAdminService:
             }
             user = self.client.create_user_async(project_id, instance_name, user_body)
             print(f"Cloud SQL user created: {user}")
+    
+    def delete_sql_instance(self, project_id: str, instance_name: str) -> None:
+        try:
+            self.client.get_instance(project_id, instance_name)
+        except Exception:
+            print(f"Instance {instance_name} not found, skipping deletion...")
+            return
+        print(f"Deleting instance: {instance_name}...")
+        self.client.delete_instance(project_id, instance_name)
+        print(f"Deleted instance: {instance_name}")

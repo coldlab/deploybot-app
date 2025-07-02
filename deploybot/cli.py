@@ -1,6 +1,5 @@
 import click
 import time
-from pathlib import Path
 from deploybot.core.enums import Target
 from deploybot.core.stack import get_stack
 from deploybot.core.parameters import DeployParameters
@@ -22,7 +21,8 @@ def _setup_stack_and_provisioner(stack: str, target: str, project_id: str, regio
         stack=stack,
         target=Target(target) if target else None,
         project_id=project_id,
-        region=region
+        region=region,
+        # provisioner=Provisioner.PULUMI
     )
     
     # Load stack configuration
@@ -31,44 +31,49 @@ def _setup_stack_and_provisioner(stack: str, target: str, project_id: str, regio
     # Determine target
     actual_target = params.target or stack_obj.default_target
     
+    if params.provisioner is None:
+        params.provisioner = stack_obj.default_provisioner
+   
     # Create target instance
     target_instance = TargetFactory.create(actual_target, stack_obj.config.config, params)
     target_instance.validate_credentials()
-    terraform_provisioner = target_instance.get_provisioner(stack_obj)
-    terraform_provisioner.validate()
+    infrastructure_provisioner = target_instance.get_provisioner(stack_obj)
+    infrastructure_provisioner.validate()
     
-    return stack_obj, target_instance, terraform_provisioner
+    return stack_obj, target_instance, infrastructure_provisioner
 
 @cli.command()
 @click.option('--stack', required=True, help='Name of the stack (e.g. gcp-web)')
 @click.option('--target', help='Deployment target (gcp, aws). Defaults to stack\'s default target if not provided.')
 @click.option('--project-id', help='GCP Project ID (required for GCP target)')
 @click.option('--region', help='Region to deploy to (overrides stack config)')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output during deployment')
-def deploy(stack: str, target: str, project_id: str, region: str, verbose: bool):
+# @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output during deployment')
+def deploy(stack: str, target: str, project_id: str, region: str):
     """Deploy a stack to the specified target."""
     start_time = time.time()
     ui.print_header()
 
     try:
         # Setup stack and provisioner
-        stack_obj, target_instance, terraform_provisioner = _setup_stack_and_provisioner(
+        stack_obj, target_instance, infrastructure_provisioner = _setup_stack_and_provisioner(
             stack, target, project_id, region
         )
         
         # Print stack information
         ui.print_stack_info(stack_obj, target_instance)
 
-        if verbose:
-            # Define progress callback for real-time updates
-            def progress_callback(event: str):
-                ui.console.print(f"  {event}")
+        outputs = infrastructure_provisioner.apply()
+
+        # if verbose:
+        #     # Define progress callback for real-time updates
+        #     def progress_callback(event: str):
+        #         ui.console.print(f"  {event}")
             
-            ui.console.print("[bold blue]🚀 Deploying Infrastructure...[/bold blue]")
-            outputs = terraform_provisioner.apply(verbose=True, progress_callback=progress_callback)
-        else:
-            with ui.spinner("[bold blue]🚀 Deploying Infrastructure...[/bold blue]"):
-                outputs = terraform_provisioner.apply(verbose=False)
+        #     ui.console.print("[bold blue]🚀 Deploying Infrastructure...[/bold blue]")
+        #     outputs = infrastructure_provisioner.apply(verbose=True, progress_callback=progress_callback)
+        # else:
+        #     with ui.spinner("[bold blue]🚀 Deploying Infrastructure...[/bold blue]"):
+        #         outputs = infrastructure_provisioner.apply(verbose=False)
         
         # Print outputs
         ui.print_success("✅ Infrastructure deployed!")
@@ -93,12 +98,12 @@ def plan(stack: str, target: str, project_id: str, region: str):
     
     try:
         # Setup stack and provisioner
-        stack_obj, target_instance, terraform_provisioner = _setup_stack_and_provisioner(
+        stack_obj, target_instance, infrastructure_provisioner = _setup_stack_and_provisioner(
             stack, target, project_id, region
         )
         
         with ui.spinner("[bold blue]🔎 Generating deployment plan...[/bold blue]"):
-            plan_output = terraform_provisioner.plan()
+            plan_output = infrastructure_provisioner.plan()
         ui.console.print(f"[bold yellow]{plan_output}[/bold yellow]")
     except Exception as e:
         ui.print_error(f"Error: {str(e)}")
@@ -109,16 +114,16 @@ def plan(stack: str, target: str, project_id: str, region: str):
 @click.option('--target', help='Deployment target (gcp, aws). Defaults to stack\'s default target if not provided.')
 @click.option('--project-id', help='GCP Project ID (required for GCP target)')
 @click.option('--region', help='Region to deploy to (overrides stack config)')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose output during destruction')
+# @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output during destruction')
 @click.option('--force', '-f', is_flag=True, help='Skip confirmation prompt')
-def destroy(stack: str, target: str, project_id: str, region: str, verbose: bool, force: bool):
+def destroy(stack: str, target: str, project_id: str, region: str, force: bool):
     """Destroy a deployed stack."""
     start_time = time.time()
     ui.print_header()
 
     try:
         # Setup stack and provisioner
-        stack_obj, target_instance, terraform_provisioner = _setup_stack_and_provisioner(
+        stack_obj, target_instance, infrastructure_provisioner = _setup_stack_and_provisioner(
             stack, target, project_id, region
         )
         
@@ -132,16 +137,18 @@ def destroy(stack: str, target: str, project_id: str, region: str, verbose: bool
                 ui.console.print("[bold yellow]❌ Destruction cancelled.[/bold yellow]")
                 return
 
-        if verbose:
-            # Define progress callback for real-time updates
-            def progress_callback(event: str):
-                ui.console.print(f"  {event}")
+        infrastructure_provisioner.destroy()
+
+        # if verbose:
+        #     # Define progress callback for real-time updates
+        #     def progress_callback(event: str):
+        #         ui.console.print(f"  {event}")
             
-            ui.console.print("[bold red]🗑️ Destroying Infrastructure...[/bold red]")
-            terraform_provisioner.destroy(verbose=True, progress_callback=progress_callback)
-        else:
-            with ui.spinner("[bold red]🗑️ Destroying Infrastructure...[/bold red]"):
-                terraform_provisioner.destroy(verbose=False)
+        #     ui.console.print("[bold red]🗑️ Destroying Infrastructure...[/bold red]")
+        #     infrastructure_provisioner.destroy(verbose=True, progress_callback=progress_callback)
+        # else:
+        #     with ui.spinner("[bold red]🗑️ Destroying Infrastructure...[/bold red]"):
+        #         infrastructure_provisioner.destroy(verbose=False)
         
         # Print success message
         ui.print_success("✅ Infrastructure destroyed!")

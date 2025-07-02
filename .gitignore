@@ -44,5 +44,6 @@ terraform.rc
 !package.json
 !tsconfig.json
 
-# Local test files
+# Deploybot test files
+deploybot/test/
 *.test.py

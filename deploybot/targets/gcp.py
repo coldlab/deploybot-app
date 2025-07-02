@@ -7,7 +7,7 @@ from deploybot.core.stack import Stack
 from deploybot.provisioners.base import BaseProvisioner
 from .base import BaseTarget
 from ..provisioners.factory import ProvisionerFactory
-
+from deploybot.core.global_state import global_state_manager
 
 class GCPTarget(BaseTarget):
     """GCP deployment target implementation."""
@@ -24,16 +24,20 @@ class GCPTarget(BaseTarget):
         # Validate required configuration
         if not self.project_id:
             raise ValueError("GCP project_id is required")
+
+        global_state_manager.project_id = self.project_id
     
     def _init_credentials(self) -> None:
         """Initialize GCP credentials using Application Default Credentials."""
         try:
-            self.credentials, self.default_project = google.auth.default()
+            credentials, default_project = google.auth.default()
             
-            if not self.project_id and self.default_project:
-                self.project_id = self.default_project
-                self.config['project_id'] = self.default_project
+            if not self.project_id and default_project:
+                self.project_id = default_project
+                self.config['project_id'] = default_project
 
+            global_state_manager.gcp_credentials = credentials
+            
         except Exception as e:
             raise Exception(
                 f"Failed to load GCP Application Default Credentials: {str(e)}. "
@@ -46,7 +50,7 @@ class GCPTarget(BaseTarget):
         try:
             # Try to access GCS as a simple permission check
             storage_client = storage.Client(
-                credentials=self.credentials,
+                credentials=global_state_manager.gcp_credentials,
                 project=self.project_id
             )
             # Make a small API call to verify credentials

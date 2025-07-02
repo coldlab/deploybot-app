@@ -18,7 +18,7 @@ class DeployParameters(BaseModel):
         default=None,
         description="Region to deploy to (overrides stack config)"
     )
-    provisioner: Provisioner = Field(
-        default=Provisioner.TERRAFORM,
-        description="Provisioner to use (terraform, pulumi). Defaults to stack's default provisioner if not provided."
+    provisioner: Optional[Provisioner] = Field(
+        default=None,
+        description="Provisioner to use (native, terraform, pulumi). Defaults to stack's default provisioner if not provided."
     )

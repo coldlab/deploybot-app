@@ -1,0 +1,37 @@
+name: fastapi-postgres
+target: gcp
+default_provisioner: native
+provisioners:
+  - native
+config:
+  gcp:
+    project_id: my-project
+    region: us-central1
+    db_instance: test-db-instance
+    db_user: admin
+    db_password: supersecretpassword
+    database_name: fastapi_db
+    cloud_run_service_name: fastapi-app
+    cloud_run_memory: 512Mi
+    cloud_run_cpu: 1
+    cloud_run_max_instances: 10
+    bucket_name: coldlab-bucket
+    app_name: fastapi-app
+    image_tag: latest
+
+
+# {
+#   "project_id": "coldlab-central",
+#   "region": "us-central1",
+#   "db_instance": "test-db-instance",
+#   "db_user": "admin",
+#   "db_password": "supersecretpassword",
+#   "database_name": "fastapi_db",
+#   "cloud_run_service_name": "fastapi-app",
+#   "cloud_run_memory": "512Mi",
+#   "cloud_run_cpu": 1,
+#   "cloud_run_max_instances": 10,
+#   "bucket_name": "coldlab-bucket",
+#   "app_name": "fastapi-app",
+#   "image_tag": "latest"
+# } 

@@ -20,3 +20,13 @@ class GCPStorageService:
         os.remove(tar_path)
         
         return f"{object_name}.tar.gz"
+
+    def delete_file(self, bucket_name: str, object_name: str) -> None:
+        file = self.client.get_file(bucket_name, object_name)
+        if file.exists():
+            file.delete()
+            print(f"Deleted file: gs://{bucket_name}/{object_name}")
+            return
+
+        print(f"File not found: gs://{bucket_name}/{object_name}")
+        print("Skipping deletion...")
