@@ -130,8 +130,12 @@ class FastAPIPostgresRecipe(BaseRecipe):
             binding
         )
 
-        print(f"Application URL: {service.uri}")
-        print(f"FastAPI PostgreSQL stack deployment completed!")
+        # print(f"Application URL: {service.uri}")
+        # print(f"FastAPI PostgreSQL stack deployment completed!")
+
+        return {
+            'app_url': service.uri
+        }
 
 
         # TODO: Create a state file to track the deployment (e.g. something simple just to know if the deployment is done, failed, etc.)

@@ -23,10 +23,10 @@ class NativeProvisioner(BaseProvisioner):
     def init(self) -> None:
         self._write_variables()
 
-    def apply(self) -> None:
+    def apply(self) -> Dict[str, Any]:
         recipe_cls = RecipeRegistry.get(self.stack_name)
         recipe = recipe_cls()
-        recipe.deploy()
+        return recipe.deploy()
 
     def destroy(self) -> None:
         recipe_cls = RecipeRegistry.get(self.stack_name)
